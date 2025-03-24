@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aiuser
+      POSTGRES_PASSWORD: aipassword
+      POSTGRES_DB: aiassistant
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiuser -d aiassistant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  main-server:
+    build: ./main-server
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
+      - PORT=3000
+      - NODE_ENV=development
+    volumes:
+      - ./main-server:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  core-service:
+    build: ./services/core
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - main-server
+    environment:
+      - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
+      - PORT=3001
+      - NODE_ENV=development
+    volumes:
+      - ./services/core:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  learning-system:
+    build: ./services/learning-system
+    ports:
+      - "3002:3002"
+    depends_on:
+      - postgres
+      - main-server
+    environment:
+      - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
+      - PORT=3002
+      - NODE_ENV=development
+    volumes:
+      - ./services/learning-system:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  response-generator:
+    build: ./services/response-generator
+    ports:
+      - "3003:3003"
+    depends_on:
+      - postgres
+      - main-server
+    environment:
+      - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
+      - PORT=3003
+      - NODE_ENV=development
+    volumes:
+      - ./services/response-generator:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  ego-service:
+    build: ./services/ego-service
+    ports:
+      - "3004:3004"
+    depends_on:
+      - postgres
+      - main-server
+    environment:
+      - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
+      - PORT=3004
+      - NODE_ENV=development
+    volumes:
+      - ./services/ego-service:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
