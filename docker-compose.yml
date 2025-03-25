@@ -14,7 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      
+
   main-server:
     build: ./main-server
     ports:
@@ -39,7 +39,7 @@ services:
       - /app/node_modules
       - /app/dist
     restart: unless-stopped
-    
+
   core-service:
     build: ./services/core
     ports:
@@ -63,8 +63,10 @@ services:
       - ./services/core/setup-db.js:/app/setup-db.js
       - /app/node_modules
       - /app/dist
+      - ./services/core/nodemon.json:/app/nodemon.json
+
     restart: unless-stopped
-    
+
   learning-system:
     build: ./services/learning-system
     ports:
@@ -89,7 +91,7 @@ services:
       - /app/node_modules
       - /app/dist
     restart: unless-stopped
-    
+
   response-generator:
     build: ./services/response-generator
     ports:
@@ -113,8 +115,10 @@ services:
       - ./services/response-generator/setup-db.js:/app/setup-db.js
       - /app/node_modules
       - /app/dist
+      - ./services/core/nodemon.json:/app/nodemon.json
+
     restart: unless-stopped
-    
+
   ego-service:
     build: ./services/ego-service
     ports:

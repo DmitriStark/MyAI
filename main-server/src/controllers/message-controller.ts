@@ -55,8 +55,6 @@ export class MessageController {
         content,
         processed: false
       });
-      console.log("@@@@",message)
-
       
 
       // Update conversation last_message_at
