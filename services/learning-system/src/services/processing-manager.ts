@@ -128,7 +128,7 @@ class ProcessingManager {
             // Mark as failed again
             await task.update({
               status: 'failed',
-              error: `Retry failed: ${error.message}`,
+              error: `Retry failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
               completedAt: new Date()
             });
           }

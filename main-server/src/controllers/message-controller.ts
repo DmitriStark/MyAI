@@ -55,7 +55,10 @@ export class MessageController {
         content,
         processed: false
       });
+      console.log("@@@@",message)
+
       
+
       // Update conversation last_message_at
       await models.Conversation.update(
         { lastMessageAt: new Date() },
@@ -64,14 +67,14 @@ export class MessageController {
       
       // Send to Core Service for processing
       try {
-        await axios.post(process.env.CORE_SERVICE_URL || 'http://localhost:3001/api/process', {
-          messageId: message.id,
+        await axios.post(process.env.CORE_SERVICE_URL || 'http://core-service:3001/api/process', {
+          messageId: message.dataValues.id,
           userId,
           conversationId
         });
         
         // Also send directly to learning system
-        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://localhost:3002/api/learn', {
+        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://learning-system:3002/api/learn', {
           content,
           source: `user:${userId}`,
           type: 'user_input',
@@ -85,6 +88,7 @@ export class MessageController {
         });
       } catch (error) {
         console.error('Error forwarding message:', error instanceof Error ? error.message : 'Unknown error');
+        console.log(error)
         res.status(201).json({ 
           id: message.id, 
           status: 'Message received but error in processing' 
@@ -139,7 +143,7 @@ export class MessageController {
       
       // Forward to learning system
       try {
-        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://localhost:3002/api/learn/feedback', {
+        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://learning-system:3002/api/learn/feedback', {
           messageId: id,
           feedbackId: feedback.id,
           rating,

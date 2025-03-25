@@ -5,7 +5,7 @@ import models from '../models';
 dotenv.config();
 
 // Define service URLs
-const learningServiceUrl = process.env.LEARNING_SYSTEM_URL || 'http://localhost:3002';
+const learningServiceUrl = process.env.LEARNING_SYSTEM_URL || 'http://learning-system:3002';
 const responseServiceUrl = process.env.RESPONSE_GENERATOR_URL || 'http://localhost:3003';
 const egoServiceUrl = process.env.EGO_SERVICE_URL || 'http://localhost:3004';
 

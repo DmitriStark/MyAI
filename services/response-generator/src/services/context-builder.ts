@@ -1,5 +1,17 @@
 import models from '../models';
 
+// Define the interface for the context object
+interface ConversationContext {
+  messageCount: number;
+  conversationDuration: number;
+  recentMessages: any[];
+  userSentiment: string;
+  topics: string[];
+  contextType: string;
+  userId: number | null;
+  userPreferences?: any;  // Optional property
+}
+
 class ContextBuilder {
   /**
    * Build context from conversation history
@@ -7,9 +19,9 @@ class ContextBuilder {
    * @param userId User ID
    * @returns Context object
    */
-  async buildContext(messages: any[], userId?: number): Promise<any> {
+  async buildContext(messages: any[], userId?: number): Promise<ConversationContext> {
     // Default context
-    const context = {
+    const context: ConversationContext = {
       messageCount: messages.length,
       conversationDuration: this.calculateConversationDuration(messages),
       recentMessages: this.extractRecentMessages(messages),

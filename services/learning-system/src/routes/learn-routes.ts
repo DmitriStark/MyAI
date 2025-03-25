@@ -1,5 +1,6 @@
 import express from 'express';
 import models from '../models';
+import { Op } from 'sequelize'; // Add this import
 import { UserInputProcessor } from '../processors/user-input-processor';
 import { ApiError } from '../middleware/error-handler';
 
@@ -64,13 +65,13 @@ router.get('/knowledge', async (req, res, next) => {
     
     if (tag) {
       whereClause.tags = {
-        [models.sequelize.Op.contains]: [tag]
+        [Op.contains]: [tag] // Use Op directly
       };
     }
     
     if (confidence) {
       whereClause.confidence = {
-        [models.sequelize.Op.gte]: parseFloat(confidence as string)
+        [Op.gte]: parseFloat(confidence as string) // Use Op directly
       };
     }
     
@@ -117,8 +118,7 @@ router.get('/knowledge/search/:query', async (req, res, next) => {
     const knowledge = await models.Knowledge.findAll({
       where: {
         content: {
-            [Op.iLike]: `%${query}%`
-
+            [Op.iLike]: `%${query}%` // Use Op directly
         }
       },
       order: [['confidence', 'DESC']],

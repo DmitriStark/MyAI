@@ -1,5 +1,6 @@
 import models from '../models';
 import nlpService from '../services/nlp-service';
+import { Op } from 'sequelize';  // Add this import
 
 interface ProcessOptions {
   source?: string;
@@ -145,7 +146,7 @@ export class UserInputProcessor {
         await models.LearningTask.update(
           { 
             status: 'failed',
-            error: error.message,
+            error: error instanceof Error ? error.message : 'Unknown error',
             completedAt: new Date()
           },
           { where: { id: options.taskId } }
@@ -167,10 +168,10 @@ export class UserInputProcessor {
       const relatedKnowledge = await models.Knowledge.findAll({
         where: {
           content: {
-            [models.sequelize.Op.iLike]: `%${input.substring(0, 100)}%`
+            [Op.iLike]: `%${input.substring(0, 100)}%`
           },
           id: {
-            [models.sequelize.Op.notIn]: newKnowledge.map(k => k.id)
+            [Op.notIn]: newKnowledge.map(k => k.id)
           }
         },
         limit: 5

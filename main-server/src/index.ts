@@ -1,68 +1,53 @@
 import express from 'express';
-import { Request, Response, NextFunction } from 'express';
-import { ParamsDictionary } from 'express-serve-static-core';
-import { ParsedQs } from 'qs';
+import cors from 'cors';
+import morgan from 'morgan';
+import errorHandler from './middleware/error-handler';
+import models from './models';
 
-// Custom API Error type
-export interface ApiError extends Error {
-  statusCode: number;
-}
+// Import routes
+import messageRoutes from './routes/message-routes';
+import userRoutes from './routes/user-routes';
+import conversationRoutes from './routes/conversation-routes';
 
-// Type declaration for error handling middleware
-export type ErrorHandlingMiddleware = (
-  err: Error | ApiError, 
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-) => void;
+const app = express();
+const port = process.env.PORT || 3000;
 
-// Detailed error handler with explicit typing
-export const errorHandler: ErrorHandlingMiddleware = (
-  err: Error | ApiError, 
-  req: Request, 
-  res: Response, 
-  next: NextFunction
-) => {
-  console.error('Error:', err);
-  
-  // If it's an ApiError with a specific status code
-  if ('statusCode' in err) {
-    return res.status((err as ApiError).statusCode).json({
-      error: err.message
-    });
-  }
-  
-  // Handle Sequelize validation errors
-  if (err.name === 'SequelizeValidationError' || err.name === 'SequelizeUniqueConstraintError') {
-    return res.status(400).json({
-      error: 'Validation error',
-      details: (err as any).errors?.map((e: any) => e.message)
-    });
-  }
-  
-  // Handle database connection errors
-  if (err.name === 'SequelizeConnectionError' || err.name === 'SequelizeConnectionRefusedError') {
-    return res.status(503).json({
-      error: 'Database connection error',
-      details: 'The service is temporarily unavailable. Please try again later.'
-    });
-  }
-  
-  // Default server error
-  res.status(500).json({
-    error: 'Internal server error',
-    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+// Apply middleware
+app.use(cors());
+app.use(express.json());
+app.use(morgan('dev'));
+
+// Basic health check route
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+// Make models available in requests
+app.use((req: any, res, next) => {
+  req.models = models;
+  next();
+});
+
+// Register API routes
+app.use('/api/messages', messageRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/conversation', conversationRoutes);
+
+// Apply error handling middleware
+app.use(errorHandler);
+
+// Catch-all route for undefined routes
+app.use((req, res) => {
+  res.status(404).json({ 
+    message: 'Route not found', 
+    method: req.method,
+    path: req.path 
   });
-};
+});
 
-// Function to apply error handler to an Express app
-export function applyErrorHandler(app: express.Application) {
-  app.use((
-    err: Error | ApiError, 
-    req: Request, 
-    res: Response, 
-    next: NextFunction
-  ) => errorHandler(err, req, res, next));
-}
+// Start the server
+app.listen(port, () => {
+  console.log(`Main Server listening on port ${port}`);
+});
 
-export default errorHandler;
+export default app;

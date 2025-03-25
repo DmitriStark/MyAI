@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -16,7 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
+      
   main-server:
     build: ./main-server
     ports:
@@ -28,11 +26,20 @@ services:
       - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
       - PORT=3000
       - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=aiuser
+      - DB_PASSWORD=aipassword
+      - DB_PORT=5432
     volumes:
-      - ./main-server:/app
+      - ./main-server/src:/app/src
+      - ./main-server/package.json:/app/package.json
+      - ./main-server/tsconfig.json:/app/tsconfig.json
+      - ./main-server/db-init.js:/app/db-init.js
+      - ./main-server/setup-db.js:/app/setup-db.js
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
-
+    
   core-service:
     build: ./services/core
     ports:
@@ -44,11 +51,20 @@ services:
       - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
       - PORT=3001
       - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=aiuser
+      - DB_PASSWORD=aipassword
+      - DB_PORT=5432
     volumes:
-      - ./services/core:/app
+      - ./services/core/src:/app/src
+      - ./services/core/package.json:/app/package.json
+      - ./services/core/tsconfig.json:/app/tsconfig.json
+      - ./services/core/db-init.js:/app/db-init.js
+      - ./services/core/setup-db.js:/app/setup-db.js
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
-
+    
   learning-system:
     build: ./services/learning-system
     ports:
@@ -60,11 +76,20 @@ services:
       - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
       - PORT=3002
       - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=aiuser
+      - DB_PASSWORD=aipassword
+      - DB_PORT=5432
     volumes:
-      - ./services/learning-system:/app
+      - ./services/learning-system/src:/app/src
+      - ./services/learning-system/package.json:/app/package.json
+      - ./services/learning-system/tsconfig.json:/app/tsconfig.json
+      - ./services/learning-system/db-init.js:/app/db-init.js
+      - ./services/learning-system/setup-db.js:/app/setup-db.js
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
-
+    
   response-generator:
     build: ./services/response-generator
     ports:
@@ -76,11 +101,20 @@ services:
       - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
       - PORT=3003
       - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=aiuser
+      - DB_PASSWORD=aipassword
+      - DB_PORT=5432
     volumes:
-      - ./services/response-generator:/app
+      - ./services/response-generator/src:/app/src
+      - ./services/response-generator/package.json:/app/package.json
+      - ./services/response-generator/tsconfig.json:/app/tsconfig.json
+      - ./services/response-generator/db-init.js:/app/db-init.js
+      - ./services/response-generator/setup-db.js:/app/setup-db.js
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
-
+    
   ego-service:
     build: ./services/ego-service
     ports:
@@ -92,9 +126,18 @@ services:
       - DATABASE_URL=postgres://aiuser:aipassword@postgres:5432/aiassistant
       - PORT=3004
       - NODE_ENV=development
+      - DB_HOST=postgres
+      - DB_USER=aiuser
+      - DB_PASSWORD=aipassword
+      - DB_PORT=5432
     volumes:
-      - ./services/ego-service:/app
+      - ./services/ego-service/src:/app/src
+      - ./services/ego-service/package.json:/app/package.json
+      - ./services/ego-service/tsconfig.json:/app/tsconfig.json
+      - ./services/ego-service/db-init.js:/app/db-init.js
+      - ./services/ego-service/setup-db.js:/app/setup-db.js
       - /app/node_modules
+      - /app/dist
     restart: unless-stopped
 
 volumes:

@@ -199,16 +199,16 @@ class NLPService {
     
     const concepts: any[] = [];
     
-    // Reset TF-IDF
-    tfidf.documents = [];
+    // Create a new TF-IDF instance instead of trying to reset the existing one
+    const documentTfidf = new natural.TfIdf();
     
     // Add the document
-    tfidf.addDocument(text);
+    documentTfidf.addDocument(text);
     
     // Get the top terms
     const terms: { term: string; tfidf: number }[] = [];
     
-    tfidf.listTerms(0).forEach(item => {
+    documentTfidf.listTerms(0).forEach(item => {
       // Skip short terms and numbers
       if (item.term.length > 3 && isNaN(Number(item.term))) {
         terms.push({
