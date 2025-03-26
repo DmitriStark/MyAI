@@ -1,8 +1,10 @@
 import express from 'express';
-import models from '../models';
+import Database from '@ai-assistant/db-models';
 import { FeedbackProcessor } from '../processors/feedback-processor';
 import { ApiError } from '../middleware/error-handler';
 
+// Initialize database connection
+const db = Database.getInstance();
 const router = express.Router();
 const feedbackProcessor = new FeedbackProcessor();
 
@@ -16,7 +18,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Check if message exists
-    const message = await models.Message.findByPk(messageId);
+    const message = await db.Message.findByPk(messageId);
     
     if (!message) {
       throw new ApiError(404, 'Message not found');
@@ -26,12 +28,12 @@ router.post('/', async (req, res, next) => {
     let feedback;
     
     if (feedbackId) {
-      feedback = await models.Feedback.findByPk(feedbackId);
+      feedback = await db.Feedback.findByPk(feedbackId);
       if (!feedback) {
         throw new ApiError(404, 'Feedback not found');
       }
     } else {
-      feedback = await models.Feedback.create({
+      feedback = await db.Feedback.create({
         messageId,
         rating: rating || null,
         feedbackText: feedbackText || null
@@ -39,7 +41,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Create a learning task
-    const task = await models.LearningTask.create({
+    const task = await db.LearningTask.create({
       type: 'feedback',
       sourceId: feedback.id,
       sourceType: 'feedback',
@@ -78,12 +80,12 @@ router.get('/', async (req, res, next) => {
       whereClause.messageId = messageId;
     }
     
-    const feedback = await models.Feedback.findAll({
+    const feedback = await db.Feedback.findAll({
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit as string) || 50,
       include: [{
-        model: models.Message,
+        model: db.Message,
         attributes: ['id', 'content', 'sender', 'conversationId']
       }]
     });
@@ -99,9 +101,9 @@ router.get('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const feedback = await models.Feedback.findByPk(id, {
+    const feedback = await db.Feedback.findByPk(id, {
       include: [{
-        model: models.Message,
+        model: db.Message,
         attributes: ['id', 'content', 'sender', 'conversationId']
       }]
     });
@@ -122,7 +124,7 @@ router.put('/:id', async (req, res, next) => {
     const { id } = req.params;
     const { rating, feedbackText } = req.body;
     
-    const feedback = await models.Feedback.findByPk(id);
+    const feedback = await db.Feedback.findByPk(id);
     
     if (!feedback) {
       throw new ApiError(404, 'Feedback not found');
@@ -135,7 +137,7 @@ router.put('/:id', async (req, res, next) => {
     });
     
     // Create a learning task to process the updated feedback
-    const task = await models.LearningTask.create({
+    const task = await db.LearningTask.create({
       type: 'feedback_update',
       sourceId: feedback.id,
       sourceType: 'feedback',

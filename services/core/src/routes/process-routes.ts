@@ -1,7 +1,10 @@
 import express from 'express';
-import models from '../models';
+import Database from '@ai-assistant/db-models';
 import messageProcessor from '../services/message-processor';
 import { ApiError } from '../middleware/error-handler';
+
+// Initialize database connection
+const db = Database.getInstance();
 
 const router = express.Router();
 
@@ -15,14 +18,14 @@ router.post('/', async (req, res, next) => {
     }
     
     // Check if message exists
-    const message = await models.Message.findByPk(messageId);
+    const message = await db.Message.findByPk(messageId);
     
     if (!message) {
       throw new ApiError(404, 'Message not found');
     }
     
     // Check if message is already being processed
-    const existingTask = await models.ProcessingTask.findOne({
+    const existingTask = await db.ProcessingTask.findOne({
       where: { messageId }
     });
     
@@ -35,7 +38,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Create a new processing task
-    const task = await models.ProcessingTask.create({
+    const task = await db.ProcessingTask.create({
       messageId,
       status: 'pending',
       services: {
@@ -63,10 +66,10 @@ router.get('/:messageId/status', async (req, res, next) => {
   try {
     const { messageId } = req.params;
     
-    const task = await models.ProcessingTask.findOne({
+    const task = await db.ProcessingTask.findOne({
       where: { messageId },
       include: [{
-        model: models.Message,
+        model: db.Message,
         attributes: ['id', 'sender', 'processed']
       }]
     });
@@ -93,7 +96,7 @@ router.post('/:messageId/cancel', async (req, res, next) => {
   try {
     const { messageId } = req.params;
     
-    const task = await models.ProcessingTask.findOne({
+    const task = await db.ProcessingTask.findOne({
       where: { messageId }
     });
     

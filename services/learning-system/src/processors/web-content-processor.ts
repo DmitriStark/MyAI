@@ -1,7 +1,10 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
-import models from '../models';
+import Database from '@ai-assistant/db-models';
 import nlpService from '../services/nlp-service';
+
+// Initialize database connection
+const db = Database.getInstance();
 
 export class WebContentProcessor {
   /**
@@ -12,7 +15,7 @@ export class WebContentProcessor {
   async processUrl(sourceId: number, taskId: number): Promise<void> {
     try {
       // Update task status to processing
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { 
           status: 'processing',
           progress: 0.1
@@ -21,7 +24,7 @@ export class WebContentProcessor {
       );
       
       // Get the learning source
-      const source = await models.LearningSource.findByPk(sourceId);
+      const source = await db.LearningSource.findByPk(sourceId);
       
       if (!source || !source.url) {
         throw new Error(`Invalid learning source: ${sourceId}`);
@@ -34,7 +37,7 @@ export class WebContentProcessor {
       const html = await this.fetchWebPage(source.url);
       
       // Update task progress
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { progress: 0.3 },
         { where: { id: taskId } }
       );
@@ -50,7 +53,7 @@ export class WebContentProcessor {
       });
       
       // Update task progress
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { progress: 0.5 },
         { where: { id: taskId } }
       );
@@ -59,7 +62,7 @@ export class WebContentProcessor {
       const nlpResults = await nlpService.analyze(content);
       
       // Update task progress
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { progress: 0.7 },
         { where: { id: taskId } }
       );
@@ -71,7 +74,7 @@ export class WebContentProcessor {
       await source.update({ status: 'processed' });
       
       // Update task status to completed
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { 
           status: 'completed',
           progress: 1.0,
@@ -83,13 +86,13 @@ export class WebContentProcessor {
       console.error('[LEARNING] Error processing URL:', error);
       
       // Update source status to failed
-      await models.LearningSource.update(
+      await db.LearningSource.update(
         { status: 'failed' },
         { where: { id: sourceId } }
       );
       
       // Update task status to failed
-      await models.LearningTask.update(
+      await db.LearningTask.update(
         { 
           status: 'failed',
           error: error instanceof Error ? error.message : String(error),
@@ -213,7 +216,7 @@ export class WebContentProcessor {
   ): Promise<void> {
     try {
       // Store the page title as knowledge
-      await models.Knowledge.create({
+      await db.Knowledge.create({
         content: title,
         source: `web:${source.id}`,
         type: 'web_title',
@@ -226,7 +229,7 @@ export class WebContentProcessor {
       
       if (content.length <= MAX_CHUNK_SIZE) {
         // Store as a single knowledge entry
-        await models.Knowledge.create({
+        await db.Knowledge.create({
           content,
           source: `web:${source.id}`,
           type: 'web_content',
@@ -238,7 +241,7 @@ export class WebContentProcessor {
         const chunks = this.splitContentIntoChunks(content, MAX_CHUNK_SIZE);
         
         for (let i = 0; i < chunks.length; i++) {
-          await models.Knowledge.create({
+          await db.Knowledge.create({
             content: chunks[i],
             source: `web:${source.id}`,
             type: 'web_content',
@@ -251,7 +254,7 @@ export class WebContentProcessor {
       // Store extracted entities
       if (nlpResults.entities && nlpResults.entities.length > 0) {
         for (const entity of nlpResults.entities) {
-          await models.Knowledge.create({
+          await db.Knowledge.create({
             content: JSON.stringify(entity),
             source: `web:${source.id}`,
             type: 'entity',
@@ -264,7 +267,7 @@ export class WebContentProcessor {
       // Store extracted facts
       if (nlpResults.facts && nlpResults.facts.length > 0) {
         for (const fact of nlpResults.facts) {
-          await models.Knowledge.create({
+          await db.Knowledge.create({
             content: fact.text,
             source: `web:${source.id}`,
             type: 'fact',

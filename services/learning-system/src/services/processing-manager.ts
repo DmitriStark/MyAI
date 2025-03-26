@@ -1,8 +1,11 @@
 import { Op } from 'sequelize';
-import models from '../models';
+import Database from '@ai-assistant/db-models';
 import { UserInputProcessor } from '../processors/user-input-processor';
 import { FeedbackProcessor } from '../processors/feedback-processor';
 import { WebContentProcessor } from '../processors/web-content-processor';
+
+// Get database instance
+const db = Database.getInstance();
 
 class ProcessingManager {
   private userInputProcessor = new UserInputProcessor();
@@ -12,9 +15,10 @@ class ProcessingManager {
   private intervals: NodeJS.Timeout[] = [];
   
   /**
-   * Start background processors
+   * Initialize the processing manager with the database connection
+   * @param database The database instance
    */
-  startBackgroundProcessors(): void {
+  initialize(database?: any): void {
     console.log('[LEARNING] Starting background processors');
     
     // Process stalled tasks every minute
@@ -59,7 +63,7 @@ class ProcessingManager {
       const stalledTimeLimit = new Date();
       stalledTimeLimit.setMinutes(stalledTimeLimit.getMinutes() - 10);
       
-      const stalledTasks = await models.LearningTask.findAll({
+      const stalledTasks = await db.LearningTask.findAll({
         where: {
           status: 'processing',
           updatedAt: {
@@ -84,7 +88,7 @@ class ProcessingManager {
       const failedTimeLimit = new Date();
       failedTimeLimit.setHours(failedTimeLimit.getHours() - 1);
       
-      const failedTasks = await models.LearningTask.findAll({
+      const failedTasks = await db.LearningTask.findAll({
         where: {
           status: 'failed',
           updatedAt: {
@@ -145,7 +149,7 @@ class ProcessingManager {
    */
   private async retryUserInputTask(task: any): Promise<void> {
     // Get the message
-    const message = await models.Message.findByPk(task.sourceId);
+    const message = await db.Message.findByPk(task.sourceId);
     
     if (!message) {
       throw new Error(`Message ${task.sourceId} not found`);
@@ -182,8 +186,8 @@ class ProcessingManager {
    */
   private async processQueuedWebSources(): Promise<void> {
     try {
-      // Find queued web sources
-      const queuedSources = await models.LearningSource.findAll({
+      // Find queued web sources - use the existing LearningSource model
+      const queuedSources = await db.LearningSource.findAll({
         where: {
           status: 'queued'
         },
@@ -197,7 +201,7 @@ class ProcessingManager {
         for (const source of queuedSources) {
           try {
             // Create a task for this source
-            const task = await models.LearningTask.create({
+            const task = await db.LearningTask.create({
               type: 'web_content',
               sourceId: source.id,
               sourceType: 'learning_source',

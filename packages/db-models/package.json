@@ -1,0 +1,21 @@
+{
+    "name": "@ai-assistant/db-models",
+    "version": "1.0.0",
+    "description": "Shared database models for AI Assistant",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+      "build": "tsc",
+      "prepare": "npm run build"
+    },
+    "dependencies": {
+      "dotenv": "^16.0.3",
+      "pg": "^8.9.0",
+      "pg-hstore": "^2.3.4",
+      "sequelize": "^6.28.0"
+    },
+    "devDependencies": {
+      "@types/node": "^18.13.0",
+      "typescript": "^4.9.5"
+    }
+  }
