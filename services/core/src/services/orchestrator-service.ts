@@ -5,8 +5,6 @@ import Database from '@dmitristark/dbpackage';
 
 dotenv.config();
 
-// Initialize database connection
-const db = Database.getInstance();
 
 // Initialize database connection
 const db = Database.getInstance();
@@ -44,8 +42,6 @@ class OrchestratorService {
       
       // Now you can use db.ProcessingTask directly
       const stalledTasks = await db.ProcessingTask.findAll({
-      // Now you can use db.ProcessingTask directly
-      const stalledTasks = await db.ProcessingTask.findAll({
         where: {
           status: 'processing',
           updatedAt: {
@@ -54,7 +50,6 @@ class OrchestratorService {
         }
       });
       
-      // Rest of the method...
       // Rest of the method...
     } catch (error) {
       console.error('Error cleaning up stalled tasks:', error);
@@ -70,7 +65,6 @@ class OrchestratorService {
       const recentTimeLimit = new Date();
       recentTimeLimit.setHours(recentTimeLimit.getHours() - 24);
       
-      const recentConversations = await db.Conversation.findAll({
       const recentConversations = await db.Conversation.findAll({
         where: {
           lastMessageAt: {

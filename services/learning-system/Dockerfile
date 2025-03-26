@@ -29,6 +29,3 @@ RUN npm run build
 
 # Use nodemon to watch for changes
 CMD ["sh", "-c", "nodemon --watch src --polling -e ts,json --exec 'ts-node src/index.ts || npm run build && node dist/index.js'"]
-
-# Use nodemon to watch for changes
-CMD ["sh", "-c", "nodemon --watch src --polling -e ts,json --exec 'ts-node src/index.ts || npm run build && node dist/index.js'"]
