@@ -1,8 +1,11 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import models from "../models";
+import Database from '@dmitristark/dbpackage';
 
 dotenv.config();
+
+// Initialize database connection
+const db = Database.getInstance();
 
 // Define service URLs
 const learningServiceUrl =
@@ -41,7 +44,7 @@ class MessageProcessor {
       await this.generateResponse(message, task, userId, conversationId);
 
       // Mark message as processed
-      await models.Message.update(
+      await db.Message.update(
         { processed: true },
         { where: { id: message.id } }
       );
@@ -125,7 +128,6 @@ class MessageProcessor {
         conversationId,
         userId,
         content: message.content || message.dataValues?.content,
-
       });
 
       // Update status to show response generator is done
@@ -140,7 +142,7 @@ class MessageProcessor {
 
       // Create a fallback response message
       try {
-        await models.Message.create({
+        await db.Message.create({
           conversationId: message.conversationId,
           sender: "assistant",
           content:

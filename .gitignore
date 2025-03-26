@@ -101,3 +101,4 @@ Local development files
 .local/
 Postgres data directory (if using local docker)
 postgres-data/
+.npmrc

@@ -1,9 +1,12 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { Op } from 'sequelize';
-import models from '../models';
+import Database from '@dmitristark/dbpackage';
 
 dotenv.config();
+
+// Initialize database connection
+const db = Database.getInstance();
 
 // Define service URLs
 const egoServiceUrl = process.env.EGO_SERVICE_URL || 'http://localhost:3004';
@@ -36,7 +39,8 @@ class OrchestratorService {
       const stalledTaskTimeLimit = new Date();
       stalledTaskTimeLimit.setMinutes(stalledTaskTimeLimit.getMinutes() - 10);
       
-      const stalledTasks = await models.ProcessingTask.findAll({
+      // Now you can use db.ProcessingTask directly
+      const stalledTasks = await db.ProcessingTask.findAll({
         where: {
           status: 'processing',
           updatedAt: {
@@ -45,19 +49,7 @@ class OrchestratorService {
         }
       });
       
-      if (stalledTasks.length > 0) {
-        console.log(`Found ${stalledTasks.length} stalled tasks. Cleaning up...`);
-        
-        for (const task of stalledTasks) {
-          await task.update({
-            status: 'failed',
-            completedAt: new Date()
-          });
-          
-          // Log the stalled task
-          console.log(`Marked stalled task ${task.id} for message ${task.messageId} as failed`);
-        }
-      }
+      // Rest of the method...
     } catch (error) {
       console.error('Error cleaning up stalled tasks:', error);
     }
@@ -72,7 +64,7 @@ class OrchestratorService {
       const recentTimeLimit = new Date();
       recentTimeLimit.setHours(recentTimeLimit.getHours() - 24);
       
-      const recentConversations = await models.Conversation.findAll({
+      const recentConversations = await db.Conversation.findAll({
         where: {
           lastMessageAt: {
             [Op.gt]: recentTimeLimit

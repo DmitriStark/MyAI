@@ -1,6 +1,9 @@
-import models from '../models';
+import Database from '@dmitristark/dbpackage';
 import nlpService from '../services/nlp-service';
-import { Op } from 'sequelize';  // Add this import
+import { Op } from 'sequelize';
+
+// Initialize database connection
+const db = Database.getInstance();
 
 interface ProcessOptions {
   source?: string;
@@ -31,7 +34,7 @@ export class UserInputProcessor {
       
       // Update task status if provided
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.1 },
           { where: { id: taskId } }
         );
@@ -42,7 +45,7 @@ export class UserInputProcessor {
       
       // Update task progress
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.3 },
           { where: { id: taskId } }
         );
@@ -51,7 +54,7 @@ export class UserInputProcessor {
       const createdKnowledge = [];
       
       // Store the original input as knowledge
-      const inputKnowledge = await models.Knowledge.create({
+      const inputKnowledge = await db.Knowledge.create({
         content: input,
         source: userId ? `user:${userId}` : source,
         type,
@@ -63,7 +66,7 @@ export class UserInputProcessor {
       
       // Update task progress
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.5 },
           { where: { id: taskId } }
         );
@@ -72,7 +75,7 @@ export class UserInputProcessor {
       // Extract entities and store them as knowledge
       if (nlpResults.entities && nlpResults.entities.length > 0) {
         for (const entity of nlpResults.entities) {
-          const entityKnowledge = await models.Knowledge.create({
+          const entityKnowledge = await db.Knowledge.create({
             content: JSON.stringify(entity),
             source: userId ? `user:${userId}` : source,
             type: 'entity',
@@ -87,7 +90,7 @@ export class UserInputProcessor {
       // Extract concepts and store them as knowledge
       if (nlpResults.concepts && nlpResults.concepts.length > 0) {
         for (const concept of nlpResults.concepts) {
-          const conceptKnowledge = await models.Knowledge.create({
+          const conceptKnowledge = await db.Knowledge.create({
             content: JSON.stringify(concept),
             source: userId ? `user:${userId}` : source,
             type: 'concept',
@@ -101,7 +104,7 @@ export class UserInputProcessor {
       
       // Update task progress
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.8 },
           { where: { id: taskId } }
         );
@@ -110,7 +113,7 @@ export class UserInputProcessor {
       // Extract facts and store them as knowledge
       if (nlpResults.facts && nlpResults.facts.length > 0) {
         for (const fact of nlpResults.facts) {
-          const factKnowledge = await models.Knowledge.create({
+          const factKnowledge = await db.Knowledge.create({
             content: fact.text,
             source: userId ? `user:${userId}` : source,
             type: 'fact',
@@ -127,7 +130,7 @@ export class UserInputProcessor {
       
       // Update task status to completed
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { 
             status: 'completed',
             progress: 1.0,
@@ -143,7 +146,7 @@ export class UserInputProcessor {
       
       // Update task status to failed if provided
       if (options.taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { 
             status: 'failed',
             error: error instanceof Error ? error.message : 'Unknown error',
@@ -165,7 +168,7 @@ export class UserInputProcessor {
   private async consolidateKnowledge(input: string, newKnowledge: any[]): Promise<void> {
     try {
       // Find existing knowledge that might be related to this input
-      const relatedKnowledge = await models.Knowledge.findAll({
+      const relatedKnowledge = await db.Knowledge.findAll({
         where: {
           content: {
             [Op.iLike]: `%${input.substring(0, 100)}%`

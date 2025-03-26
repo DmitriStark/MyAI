@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import models from './models';
+import Database from '@dmitristark/dbpackage';
 import learnRoutes from './routes/learn-routes';
 import webRoutes from './routes/web-routes';
 import feedbackRoutes from './routes/feedback-routes';
@@ -16,15 +16,31 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3002;
 
-// Initialize database and sync models
-models.syncDatabase()
-  .then(() => console.log('Learning system: Database models synchronized'))
-  .catch(err => console.error('Learning system: Error syncing database models:', err));
+// Initialize database connection
+const db = Database.getInstance(process.env.DATABASE_URL, {
+  logging: process.env.NODE_ENV === 'development' ? console.log : false
+});
+
+// Just authenticate with the database
+db.sequelize.authenticate()
+  .then(() => {
+    console.log('Learning system: Connection to database successful');
+  })
+  .catch((err: unknown) => {
+    console.error('Learning system: Error connecting to database:', err);
+    process.exit(1);
+  });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(logger);
+
+// Make db models available in routes
+app.use((req: any, res, next) => {
+  req.db = db;
+  next();
+});
 
 // Routes
 app.use('/api/learn', learnRoutes);
@@ -33,18 +49,18 @@ app.use('/api/learn/feedback', feedbackRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    service: 'learning-system', 
-    timestamp: new Date().toISOString() 
+  res.status(200).json({
+    status: 'OK',
+    service: 'learning-system',
+    timestamp: new Date().toISOString()
   });
 });
 
 // Error handler
 app.use(errorHandler);
 
-// Start background processors
-processingManager.startBackgroundProcessors();
+// Start background processors (pass the db instance)
+processingManager.initialize(db);
 
 // Start the server
 app.listen(port, () => {
@@ -57,6 +73,6 @@ process.on('SIGTERM', async () => {
   // Stop background processors
   processingManager.stopBackgroundProcessors();
   // Close database connection
-  await models.sequelize.close();
+  await db.sequelize.close();
   process.exit(0);
 });

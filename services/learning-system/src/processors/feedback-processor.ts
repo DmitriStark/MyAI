@@ -1,6 +1,9 @@
-import models from '../models';
+import Database from '@dmitristark/dbpackage';
 import nlpService from '../services/nlp-service';
 import { Op } from "sequelize";
+
+// Initialize database connection
+const db = Database.getInstance();
 
 export class FeedbackProcessor {
   /**
@@ -12,16 +15,16 @@ export class FeedbackProcessor {
     try {
       // Update task status if provided
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.1 },
           { where: { id: taskId } }
         );
       }
       
       // Get feedback details
-      const feedback = await models.Feedback.findByPk(feedbackId, {
+      const feedback = await db.Feedback.findByPk(feedbackId, {
         include: [{
-          model: models.Message,
+          model: db.Message,
           attributes: ['id', 'content', 'conversationId', 'sender']
         }]
       });
@@ -32,7 +35,7 @@ export class FeedbackProcessor {
       
       // Update task progress
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.2 },
           { where: { id: taskId } }
         );
@@ -45,7 +48,7 @@ export class FeedbackProcessor {
       
       // Update task progress
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { progress: 0.6 },
           { where: { id: taskId } }
         );
@@ -58,7 +61,7 @@ export class FeedbackProcessor {
       
       // Update task status to completed
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { 
             status: 'completed',
             progress: 1.0,
@@ -72,7 +75,7 @@ export class FeedbackProcessor {
       
       // Update task status to failed if provided
       if (taskId) {
-        await models.LearningTask.update(
+        await db.LearningTask.update(
           { 
             status: 'failed',
             error: error instanceof Error ? error.message : String(error),
@@ -110,7 +113,7 @@ export class FeedbackProcessor {
       const messageContent = feedback.Message.content;
       
       // Find knowledge that contains parts of this message content
-      const relatedKnowledge = await models.Knowledge.findAll({
+      const relatedKnowledge = await db.Knowledge.findAll({
         where: {
           content: {
             [Op.iLike]: `%${messageContent.substring(0, 100)}%`
@@ -150,7 +153,7 @@ export class FeedbackProcessor {
       const nlpResults = await nlpService.analyze(feedback.feedbackText);
       
       // Store the feedback text as a knowledge entry
-      const feedbackKnowledge = await models.Knowledge.create({
+      const feedbackKnowledge = await db.Knowledge.create({
         content: feedback.feedbackText,
         source: `feedback:${feedback.id}`,
         type: 'feedback',
@@ -166,7 +169,7 @@ export class FeedbackProcessor {
       // Extract entities and store them as knowledge
       if (nlpResults.entities && nlpResults.entities.length > 0) {
         for (const entity of nlpResults.entities) {
-          await models.Knowledge.create({
+          await db.Knowledge.create({
             content: JSON.stringify(entity),
             source: `feedback:${feedback.id}`,
             type: 'entity',
@@ -184,7 +187,7 @@ export class FeedbackProcessor {
       // Extract facts and store them as knowledge
       if (nlpResults.facts && nlpResults.facts.length > 0) {
         for (const fact of nlpResults.facts) {
-          await models.Knowledge.create({
+          await db.Knowledge.create({
             content: fact.text,
             source: `feedback:${feedback.id}`,
             type: 'fact',

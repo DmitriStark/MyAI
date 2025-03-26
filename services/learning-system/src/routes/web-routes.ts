@@ -1,8 +1,10 @@
 import express from 'express';
-import models from '../models';
+import Database from '@dmitristark/dbpackage';
 import { WebContentProcessor } from '../processors/web-content-processor';
 import { ApiError } from '../middleware/error-handler';
 
+// Initialize database connection
+const db = Database.getInstance();
 const router = express.Router();
 const webContentProcessor = new WebContentProcessor();
 
@@ -16,7 +18,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Check if URL is already in learning sources
-    const existingSource = await models.LearningSource.findOne({
+    const existingSource = await db.LearningSource.findOne({
       where: { url }
     });
     
@@ -30,14 +32,14 @@ router.post('/', async (req, res, next) => {
       });
     } else {
       // Create new source
-      source = await models.LearningSource.create({
+      source = await db.LearningSource.create({
         url,
         status: 'queued'
       });
     }
     
     // Create a learning task
-    const task = await models.LearningTask.create({
+    const task = await db.LearningTask.create({
       type: 'web_content',
       sourceId: source.id,
       sourceType: 'learning_source',
@@ -54,7 +56,7 @@ router.post('/', async (req, res, next) => {
         console.error(`Error processing web content task ${task.id} for URL: ${url}:`, error);
       });
     
-    res.status(202).json({ 
+    res.status(202).json({
       status: 'Accepted',
       sourceId: source.id,
       taskId: task.id,
@@ -76,7 +78,7 @@ router.get('/sources', async (req, res, next) => {
       whereClause.status = status;
     }
     
-    const sources = await models.LearningSource.findAll({
+    const sources = await db.LearningSource.findAll({
       where: whereClause,
       order: [['lastCrawled', 'DESC']],
       limit: parseInt(limit as string) || 50
@@ -93,7 +95,7 @@ router.get('/sources/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const source = await models.LearningSource.findByPk(id);
+    const source = await db.LearningSource.findByPk(id);
     
     if (!source) {
       throw new ApiError(404, 'Learning source not found');
@@ -110,7 +112,7 @@ router.post('/sources/:id/refresh', async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const source = await models.LearningSource.findByPk(id);
+    const source = await db.LearningSource.findByPk(id);
     
     if (!source) {
       throw new ApiError(404, 'Learning source not found');
@@ -123,7 +125,7 @@ router.post('/sources/:id/refresh', async (req, res, next) => {
     });
     
     // Create a learning task
-    const task = await models.LearningTask.create({
+    const task = await db.LearningTask.create({
       type: 'web_content',
       sourceId: source.id,
       sourceType: 'learning_source',
@@ -140,7 +142,7 @@ router.post('/sources/:id/refresh', async (req, res, next) => {
         console.error(`Error processing web content refresh task ${task.id} for source ID: ${id}:`, error);
       });
     
-    res.status(202).json({ 
+    res.status(202).json({
       status: 'Accepted',
       sourceId: source.id,
       taskId: task.id,

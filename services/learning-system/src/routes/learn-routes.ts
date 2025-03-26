@@ -1,9 +1,11 @@
 import express from 'express';
-import models from '../models';
-import { Op } from 'sequelize'; // Add this import
+import Database from '@dmitristark/dbpackage';
+import { Op } from 'sequelize';
 import { UserInputProcessor } from '../processors/user-input-processor';
 import { ApiError } from '../middleware/error-handler';
 
+// Initialize database connection
+const db = Database.getInstance();
 const router = express.Router();
 const userInputProcessor = new UserInputProcessor();
 
@@ -17,7 +19,7 @@ router.post('/', async (req, res, next) => {
     }
     
     // Create a learning task
-    const task = await models.LearningTask.create({
+    const task = await db.LearningTask.create({
       type: 'user_input',
       sourceId: messageId,
       sourceType: 'message',
@@ -65,17 +67,17 @@ router.get('/knowledge', async (req, res, next) => {
     
     if (tag) {
       whereClause.tags = {
-        [Op.contains]: [tag] // Use Op directly
+        [Op.contains]: [tag]
       };
     }
     
     if (confidence) {
       whereClause.confidence = {
-        [Op.gte]: parseFloat(confidence as string) // Use Op directly
+        [Op.gte]: parseFloat(confidence as string)
       };
     }
     
-    const knowledge = await models.Knowledge.findAll({
+    const knowledge = await db.Knowledge.findAll({
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit as string) || 100
@@ -92,7 +94,7 @@ router.get('/knowledge/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const knowledge = await models.Knowledge.findByPk(id);
+    const knowledge = await db.Knowledge.findByPk(id);
     
     if (!knowledge) {
       throw new ApiError(404, 'Knowledge not found');
@@ -115,10 +117,10 @@ router.get('/knowledge/search/:query', async (req, res, next) => {
     const { query } = req.params;
     const { limit = 10 } = req.query;
     
-    const knowledge = await models.Knowledge.findAll({
+    const knowledge = await db.Knowledge.findAll({
       where: {
         content: {
-            [Op.iLike]: `%${query}%` // Use Op directly
+            [Op.iLike]: `%${query}%`
         }
       },
       order: [['confidence', 'DESC']],
@@ -136,7 +138,7 @@ router.get('/tasks/:taskId', async (req, res, next) => {
   try {
     const { taskId } = req.params;
     
-    const task = await models.LearningTask.findByPk(taskId);
+    const task = await db.LearningTask.findByPk(taskId);
     
     if (!task) {
       throw new ApiError(404, 'Learning task not found');
@@ -163,7 +165,7 @@ router.get('/tasks', async (req, res, next) => {
       whereClause.type = type;
     }
     
-    const tasks = await models.LearningTask.findAll({
+    const tasks = await db.LearningTask.findAll({
       where: whereClause,
       order: [['createdAt', 'DESC']],
       limit: parseInt(limit as string) || 20
