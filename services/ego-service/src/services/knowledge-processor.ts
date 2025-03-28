@@ -38,7 +38,7 @@ class KnowledgeProcessor {
         await this.analyzeConversationPatterns(conversationMessages, userId);
 
         // Look for knowledge gaps
-        await this.identifyKnowledgeGaps(message.content);
+        await this.identifyKnowledgeGaps(message.dataValues.content);
 
         // Generate synthesized knowledge
         await this.synthesizeKnowledge(messageId, userId);
@@ -225,9 +225,8 @@ class KnowledgeProcessor {
       const message = await models.Message.findByPk(messageId);
 
       if (!message) return;
-
       // Extract potential key terms from the message
-      const keyTerms = this.extractKeyTerms(message.content);
+      const keyTerms = this.extractKeyTerms(message.dataValues.content);
 
       if (keyTerms.length === 0) return;
 

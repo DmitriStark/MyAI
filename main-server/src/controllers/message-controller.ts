@@ -65,14 +65,14 @@ export class MessageController {
       
       // Send to Core Service for processing
       try {
-        await axios.post(process.env.CORE_SERVICE_URL || 'http://core-service:3001/api/process', {
+        await axios.post(process.env.CORE_SERVICE_URL as string +"/api/process"|| 'http://core-service:3001/api/process', {
           messageId: message.dataValues.id,
           userId,
           conversationId
         });
         
         // Also send directly to learning system
-        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://learning-system:3002/api/learn', {
+        await axios.post(process.env.LEARNING_SYSTEM_URL as string + "/api/learn"|| 'http://learning-system:3002/api/learn', {
           content,
           source: `user:${userId}`,
           type: 'user_input',
@@ -141,7 +141,7 @@ export class MessageController {
       
       // Forward to learning system
       try {
-        await axios.post(process.env.LEARNING_SYSTEM_URL || 'http://learning-system:3002/api/learn/feedback', {
+        await axios.post(process.env.LEARNING_SYSTEM_URL+"/api/learn/feedback" || 'http://learning-system:3002/api/learn/feedback', {
           messageId: id,
           feedbackId: feedback.id,
           rating,
