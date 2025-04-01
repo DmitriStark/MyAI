@@ -193,7 +193,7 @@ export class MessageController {
         if (assistantResponse) {
           // Response found, return it with the original message
           console.log(
-            `[MESSAGE] Returning assistant response: ${assistantResponse.id}`
+            `[MESSAGE] Returning assistant response: ${assistantResponse.dataValues.id}`
           );
 
           // Extract content from the response

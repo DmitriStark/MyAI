@@ -64,7 +64,7 @@ app.use(errorHandler);
 responseService
   .preloadDefaultResponses()
   .then(() => console.log("Default responses preloaded"))
-  .catch((err) => console.error("Error preloading default responses:", err));
+  .catch((err: unknown) => console.error("Error preloading default responses:", err));
 
 // Start the server
 app.listen(port, () => {
